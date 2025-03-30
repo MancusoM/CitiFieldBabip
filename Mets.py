@@ -1,51 +1,81 @@
 import pybaseball as pyb
-import pandas as pd
 import polars as pl
+import pandas as pd
 import matplotlib.pyplot as plt
+from typing import Tuple
 
-from helper import aggregation_polars
-
+from helper import babipCalculator, create_plot
 import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-df = pd.DataFrame()
-Mets_df_polars = pl.DataFrame()
+# Create Empty DataFrame
 
-# Mets specific analysis
-for year in range(2009, 2025):
-    if year == 2020:
-        continue
-    batting_logs = pyb.team_game_logs(year, "NYM", "batting")
-    Mets_batting_logs_polars = pl.from_pandas(batting_logs)
-    Mets_batting_logs_polars = Mets_batting_logs_polars.with_columns(Year=pl.lit(year))
+def retrieveMetsAPIData()->pl.DataFrame:
+    '''
+    Calls The Function team_game_logs from pybaseball
+    :return: Mets_df_polars:pl.DataFrame: DataFrame populated with API Return
+    '''
+    initialDf = pl.DataFrame()
+    # For Each Year Citi Field's Been Open
+    for year in range(2009, 2025):
+        #Ignore 2020
+        if year == 2020:
+            continue
+        try:
+            batting_logs = pyb.team_game_logs(year, "NYM", "batting")
+        except Exception:
+            raise ValueError(Exception)
+        MetsYearReturn = pl.from_pandas(batting_logs)
+        MetsYearReturn = MetsYearReturn.with_columns(
+            Year=pl.lit(year)
+        )
+        initialDf = pl.concat([initialDf, MetsYearReturn])
+    return initialDf
 
-    Mets_df_polars = pl.concat([Mets_df_polars, Mets_batting_logs_polars])
+def filterAndProcessData(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.DataFrame]:
+    '''
 
-Mets_home_games = Mets_df_polars.filter(pl.col("Home") == True)
-grouped_home_games_polars = aggregation_polars(Mets_home_games)
+    :param apiReturn:pl.DataFrame: DataFrame containing api Data
+    :return: metsHomeGamesPandas:pd.DataFrame: Mets Home BABIP
+    :return: metsAwayGamesPandas:pd.DataFrame: Mets Away BABIP
+    '''
+    # Filter to Citi Field games & Calculates BABIP
+    metsHomeGames = apiReturn.filter(pl.col("Home") == True)
 
-Mets_away_games = Mets_df_polars.filter(pl.col("Home") == False)
-grouped_away_games_polars = aggregation_polars(Mets_away_games)
+    # Filter To Away Games & Calculates BABIP
+    metsAwayGames = apiReturn.filter(pl.col("Home") == False)
 
-grouped_Mets_home_games = aggregation_polars(grouped_home_games_polars).to_pandas()
-grouped_Mets_away_games = aggregation_polars(grouped_away_games_polars).to_pandas()
+    # Convert from Polars DF to Pandas DF for visualization
+    groupedMetsHomeGames = babipCalculator(metsHomeGames).to_pandas()
+    groupedMetsAwayGames = babipCalculator(metsAwayGames).to_pandas()
 
-plt.plot(
-    grouped_Mets_away_games["Year"],
-    round(grouped_Mets_away_games["BABIP"], 4),
-    label="Mets Away BABIP",
-)
-plt.plot(
-    grouped_Mets_home_games["Year"],
-    round(grouped_Mets_home_games["BABIP"], 4),
-    label="Mets Home BABIP",
-)
+    return groupedMetsHomeGames, groupedMetsAwayGames
 
-plt.title("Mets BABIP Home/Away")
-plt.xlabel("Year")
-plt.ylabel("BABIP")
 
-plt.legend()
-plt.grid(True)
-plt.show()
+def displayMetsPlot(groupedMetsHomeGames, groupedMetsAwayGames)-> None:
+    '''
+
+    :param: metsHomeGamesPandas:pd.DataFrame: Mets Home BABIP
+    :param: metsAwayGamesPandas:pd.DataFrame: Mets Away BABIP
+    :return:
+    '''
+    # Create Plot
+    MetsCitiGraph = create_plot(
+        groupedMetsHomeGames["Year"],
+        groupedMetsHomeGames["BABIP"],
+        "Home BABIP",
+        "Mets BABIP:Home vs Away",
+    )
+    MetsnonCitiGraph = create_plot(
+        groupedMetsAwayGames["Year"],
+        groupedMetsAwayGames["BABIP"],
+        "Away BABIP",
+        "Mets BABIP: Home vs Away",
+    )
+
+    plt.show()
+
+apiReturn = retrieveMetsAPIData()
+groupedMetsHomeGames, groupedMetsAwayGames = filterAndProcessData(apiReturn)
+displayMetsPlot(groupedMetsHomeGames, groupedMetsAwayGames)

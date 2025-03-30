@@ -2,8 +2,16 @@ import polars as pl
 import matplotlib.pyplot as plt
 
 
-def aggregation_polars(df):
-    grouped_polars = (
+def babipCalculator(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Uses the Polars Aggregation Method to Calculate BABIP
+
+    Args:
+        df (DataFrame): Raw Data From the pybaseball API
+    Returns:
+        grouped_df(DataFrame): Calculated BABIP From Each Year. Year is specified in API Call Parameters
+    """
+    BABIP = (
         df.group_by("Year")
         .agg(
             [
@@ -26,10 +34,21 @@ def aggregation_polars(df):
             )
         )
     )
-    return grouped_polars
+    return BABIP
 
 
-def create_plot(x, y, label, title):
+def create_plot(x: str, y: str, label: str, title: str)->None:
+    """
+    Creates Plot Using the Matplotlib Library
+
+    Args:
+        x (str): x-axis label
+        y (str): y-axis label
+        label(str): plotting labels
+        title(str):Title of Graph
+    Returns:
+        graph
+    """
     graph = plt.plot(x, y, label=label)
 
     plt.title(title)
