@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def babipCalculator(df: pl.DataFrame) -> pl.DataFrame:
     """
-    Uses the Polars Aggregation Method to Calculate BABIP
+    Uses the Polars Aggregation Functionality to Calculate Each Team's BABIP
 
     Args:
         df (DataFrame): Raw Data From the pybaseball API
@@ -42,8 +42,8 @@ def create_plot(x: str, y: str, label: str, title: str)->None:
     Creates Plot Using the Matplotlib Library
 
     Args:
-        x (str): x-axis label
-        y (str): y-axis label
+        x (str): x-axis
+        y (str): y-axis
         label(str): plotting labels
         title(str):Title of Graph
     Returns:

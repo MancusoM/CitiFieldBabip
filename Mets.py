@@ -9,13 +9,11 @@ import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# Create Empty DataFrame
-
 def retrieveMetsAPIData()->pl.DataFrame:
-    '''
-    Calls The Function team_game_logs from pybaseball
-    :return: Mets_df_polars:pl.DataFrame: DataFrame populated with API Return
-    '''
+    """
+    Calls The Function 'team_game_logs' from pybaseball package
+    :return: Mets_df_polars:pl.DataFrame: Raw Data From 'team_game_logs' function
+    """
     initialDf = pl.DataFrame()
     # For Each Year Citi Field's Been Open
     for year in range(2009, 2025):
@@ -27,19 +25,22 @@ def retrieveMetsAPIData()->pl.DataFrame:
         except Exception:
             raise ValueError(Exception)
         MetsYearReturn = pl.from_pandas(batting_logs)
+
+        #Adds Year To Return
         MetsYearReturn = MetsYearReturn.with_columns(
             Year=pl.lit(year)
         )
+
+        #Stacks Each Year's Return on Top of Another
         initialDf = pl.concat([initialDf, MetsYearReturn])
     return initialDf
 
 def filterAndProcessData(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.DataFrame]:
-    '''
-
+    """
     :param apiReturn:pl.DataFrame: DataFrame containing api Data
     :return: metsHomeGamesPandas:pd.DataFrame: Mets Home BABIP
     :return: metsAwayGamesPandas:pd.DataFrame: Mets Away BABIP
-    '''
+    """
     # Filter to Citi Field games & Calculates BABIP
     metsHomeGames = apiReturn.filter(pl.col("Home") == True)
 
@@ -54,20 +55,19 @@ def filterAndProcessData(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.DataFram
 
 
 def displayMetsPlot(groupedMetsHomeGames, groupedMetsAwayGames)-> None:
-    '''
-
+    """
     :param: metsHomeGamesPandas:pd.DataFrame: Mets Home BABIP
     :param: metsAwayGamesPandas:pd.DataFrame: Mets Away BABIP
     :return:
-    '''
+    """
     # Create Plot
-    MetsCitiGraph = create_plot(
+    MetsHomeGraph = create_plot(
         groupedMetsHomeGames["Year"],
         groupedMetsHomeGames["BABIP"],
         "Home BABIP",
         "Mets BABIP:Home vs Away",
     )
-    MetsnonCitiGraph = create_plot(
+    MetsAwayGraph = create_plot(
         groupedMetsAwayGames["Year"],
         groupedMetsAwayGames["BABIP"],
         "Away BABIP",
@@ -75,7 +75,8 @@ def displayMetsPlot(groupedMetsHomeGames, groupedMetsAwayGames)-> None:
     )
 
     plt.show()
-
-apiReturn = retrieveMetsAPIData()
-groupedMetsHomeGames, groupedMetsAwayGames = filterAndProcessData(apiReturn)
-displayMetsPlot(groupedMetsHomeGames, groupedMetsAwayGames)
+def main():
+    apiReturn = retrieveMetsAPIData()
+    groupedMetsHomeGames, groupedMetsAwayGames = filterAndProcessData(apiReturn)
+    displayMetsPlot(groupedMetsHomeGames, groupedMetsAwayGames)
+main()

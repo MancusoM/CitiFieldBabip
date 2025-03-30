@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 def retrieve_team_api_data(teams:dict)->pl.DataFrame:
     """
-    Retrieves team-level data from pybaseball
+    Retrieves raw data from 'team_game_logs' function from pybaseball
 
     :param teams: a predefined list of team names from teams.py.
         Key: Team Code; Value: Team Name
@@ -29,11 +29,11 @@ def retrieve_team_api_data(teams:dict)->pl.DataFrame:
             try:
                 battingLogs = pyb.team_game_logs(year, value, "batting")
                 teamBattingLogs = pl.from_pandas(battingLogs)
-                print(f"Processed: {year} {key}")
+                print(f"Successfully Processed: {year} {key}")
             except RuntimeError:
                 battingLogs = pyb.team_game_logs(year, 'FLA', "batting")
                 teamBattingLogs = pl.from_pandas(battingLogs)
-                print(f"Processed: {year} {key}")
+                print(f"Successfully Processed: {year} {key}")
 
             teamBattingLogs = teamBattingLogs.with_columns(
                 Year=pl.lit(year), Team=pl.lit(value)
@@ -43,14 +43,12 @@ def retrieve_team_api_data(teams:dict)->pl.DataFrame:
 
 
 def filter_and_process_team_data(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.DataFrame]:
-    '''
-
+    """
     :param apiReturn: pl.DataFrame:raw team-level data from api
     :return:
-        gamesNotAtCitiPandas:pd.DataFrame: Aggregated BABIP Stats From Games Not at Citi Field
-        gamesAtCitiPandas:pd.DataFrame: Aggregated BABIP Stats From Games At Citi Field
-
-    '''
+        gamesNotAtCitiPandas:pd.DataFrame: BABIP From Games Not at Citi Field
+        gamesAtCitiPandas:pd.DataFrame: BABIP From Games At Citi Field
+    """
     gamesAtCiti = apiReturn.filter(
         ((pl.col("Team") == "NYM") & (pl.col("Home") == True))
         | ((pl.col("Opp") == "NYM") & (pl.col("Home") == False))
@@ -59,7 +57,7 @@ def filter_and_process_team_data(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.
         (pl.col("Team") != "NYM") | ((pl.col("Opp") == "NYM") & (pl.col("Home") == True))
     )
 
-    # Calculate BABIP
+    # Calculate BABIP and convert to pandas
     gamesAtCitiPandas = babipCalculator(gamesAtCiti).to_pandas()
     gamesNotAtCitiPandas = babipCalculator(gamesNotAtCiti).to_pandas()
 
@@ -67,19 +65,19 @@ def filter_and_process_team_data(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.
 
 
 def show_team_plot(gamesAtCitiPandas:pl.DataFrame, gamesNotAtCitiPandas:pl.DataFrame)->None:
-    '''
+    """
     :param:
         gamesNotAtCitiPandas:pd.DataFrame: Aggregated BABIP Stats From Games Not at Citi Field
         gamesAtCitiPandas:pd.DataFrame: Aggregated BABIP Stats From Games At Citi Field
-    '''
+    """
     # Create Plot
-    CitiGraph = create_plot(
+    CitiBABIP = create_plot(
         gamesAtCitiPandas["Year"],
         gamesAtCitiPandas["BABIP"],
         "Citi Field BABIP",
         "BABIP @ Citi Field BABIP vs Away",
     )
-    nonCitiGraph = create_plot(
+    AwayBABIP = create_plot(
         gamesNotAtCitiPandas["Year"],
         gamesNotAtCitiPandas["BABIP"],
         "Away BABIP",
@@ -88,6 +86,8 @@ def show_team_plot(gamesAtCitiPandas:pl.DataFrame, gamesNotAtCitiPandas:pl.DataF
 
     plt.show()
 
-apiTeamsReturn = retrieve_team_api_data(teams)
-gamesAtCitiPandas, gamesNotAtCitiPandas = filter_and_process_team_data(apiTeamsReturn)
-show_team_plot(gamesAtCitiPandas, gamesNotAtCitiPandas)
+def main():
+    apiTeamsReturn = retrieve_team_api_data(teams)
+    gamesAtCitiPandas, gamesNotAtCitiPandas = filter_and_process_team_data(apiTeamsReturn)
+    show_team_plot(gamesAtCitiPandas, gamesNotAtCitiPandas)
+main()
