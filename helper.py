@@ -1,3 +1,5 @@
+"""Helper Functions to Calculate BABIP & Generate Plots"""
+
 import polars as pl
 import matplotlib.pyplot as plt
 
@@ -37,7 +39,7 @@ def babipCalculator(df: pl.DataFrame) -> pl.DataFrame:
     return BABIP
 
 
-def create_plot(x: str, y: str, label: str, title: str)->None:
+def create_plot(x: str, y: str, label: str, title: str):
     """
     Creates Plot Using the Matplotlib Library
 
@@ -52,8 +54,8 @@ def create_plot(x: str, y: str, label: str, title: str)->None:
     graph = plt.plot(x, y, label=label)
 
     plt.title(title)
-    plt.xlabel("Year")
-    plt.ylabel("BABIP")
+    plt.xlabel('BABIP')
+    plt.ylabel('Year')
 
     plt.legend()
     plt.grid(True)

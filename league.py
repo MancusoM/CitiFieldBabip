@@ -1,3 +1,5 @@
+"""this file generates a png visualizing BABIP at/away from Citi Field"""
+
 from teams_list import teams
 from helper import babipCalculator, create_plot
 import pybaseball as pyb
@@ -10,7 +12,8 @@ import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-def retrieve_team_api_data(teams:dict)->pl.DataFrame:
+
+def retrieve_team_api_data(teams: dict) -> pl.DataFrame:
     """
     Retrieves raw data from 'team_game_logs' function from pybaseball
 
@@ -31,7 +34,7 @@ def retrieve_team_api_data(teams:dict)->pl.DataFrame:
                 teamBattingLogs = pl.from_pandas(battingLogs)
                 print(f"Successfully Processed: {year} {key}")
             except RuntimeError:
-                battingLogs = pyb.team_game_logs(year, 'FLA', "batting")
+                battingLogs = pyb.team_game_logs(year, "FLA", "batting")
                 teamBattingLogs = pl.from_pandas(battingLogs)
                 print(f"Successfully Processed: {year} {key}")
 
@@ -42,7 +45,9 @@ def retrieve_team_api_data(teams:dict)->pl.DataFrame:
     return apiReturn
 
 
-def filter_and_process_team_data(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.DataFrame]:
+def filter_and_process_team_data(
+    apiReturn: pl.DataFrame,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     :param apiReturn: pl.DataFrame:raw team-level data from api
     :return:
@@ -54,7 +59,8 @@ def filter_and_process_team_data(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.
         | ((pl.col("Opp") == "NYM") & (pl.col("Home") == False))
     )
     gamesNotAtCiti = apiReturn.filter(
-        (pl.col("Team") != "NYM") | ((pl.col("Opp") == "NYM") & (pl.col("Home") == True))
+        (pl.col("Team") != "NYM")
+        | ((pl.col("Opp") == "NYM") & (pl.col("Home") == True))
     )
 
     # Calculate BABIP and convert to pandas
@@ -64,7 +70,9 @@ def filter_and_process_team_data(apiReturn:pl.DataFrame)->Tuple[pd.DataFrame,pd.
     return gamesAtCitiPandas, gamesNotAtCitiPandas
 
 
-def show_team_plot(gamesAtCitiPandas:pl.DataFrame, gamesNotAtCitiPandas:pl.DataFrame)->None:
+def show_team_plot(
+    gamesAtCitiPandas: pl.DataFrame, gamesNotAtCitiPandas: pl.DataFrame
+) -> None:
     """
     :param:
         gamesNotAtCitiPandas:pd.DataFrame: Aggregated BABIP Stats From Games Not at Citi Field
@@ -75,19 +83,24 @@ def show_team_plot(gamesAtCitiPandas:pl.DataFrame, gamesNotAtCitiPandas:pl.DataF
         gamesAtCitiPandas["Year"],
         gamesAtCitiPandas["BABIP"],
         "Citi Field BABIP",
-        "BABIP @ Citi Field BABIP vs Away",
+        "BABIP @ Citi Field vs Away",
     )
     AwayBABIP = create_plot(
         gamesNotAtCitiPandas["Year"],
         gamesNotAtCitiPandas["BABIP"],
         "Away BABIP",
-        "BABIP @ Citi Field BABIP vs Away",
+        "BABIP @ Citi Field vs Away",
     )
 
     plt.show()
 
+
 def main():
     apiTeamsReturn = retrieve_team_api_data(teams)
-    gamesAtCitiPandas, gamesNotAtCitiPandas = filter_and_process_team_data(apiTeamsReturn)
+    gamesAtCitiPandas, gamesNotAtCitiPandas = filter_and_process_team_data(
+        apiTeamsReturn
+    )
     show_team_plot(gamesAtCitiPandas, gamesNotAtCitiPandas)
+
+
 main()
