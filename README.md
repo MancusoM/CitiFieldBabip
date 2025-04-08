@@ -1,4 +1,4 @@
-This Repo utilizes the PyBaseball [API](https://github.com/jldbc/pybaseball) to query Baseball Reference in order to produce data visualizations to enhance an article hosted by MetsMerized.
+This Repo utilizes the PyBaseball [API](https://github.com/jldbc/pybaseball) to query Baseball Reference in order to produce data visualizations to enhance an article hosted by MetsMerized - With Assistance From Lizzy McNaughton 
 
 Installment Instructions:
 - You must use a forked repo of the pybaseball package due to [PR 470](https://github.com/jldbc/pybaseball/issues/470)
